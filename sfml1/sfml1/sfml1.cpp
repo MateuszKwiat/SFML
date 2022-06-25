@@ -1,6 +1,8 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
+#include <vector>
 #include "Player.h"
+#include "Platform.h"
 
 static const float VIEW_HEIGHT = 512.0f;
 
@@ -19,7 +21,16 @@ int main()
 	sf::Texture playerTexture;
 	playerTexture.loadFromFile("lin-tux-gimp-t.png");
 
-	Player player(&playerTexture, sf::Vector2u(3, 9), 0.3f, 100.0f);
+	Player player(&playerTexture, sf::Vector2u(3, 9), 0.3f, 100.0f, 200.0f);
+
+	std::vector<Platform> platforms;
+
+	platforms.push_back(Platform(nullptr, sf::Vector2f(400.0f, 200.0f), sf::Vector2f(500.0f,
+		200.0f)));
+	platforms.push_back(Platform(nullptr, sf::Vector2f(400.0f, 200.0f), sf::Vector2f(500.0f,
+		0.0f)));
+	platforms.push_back(Platform(nullptr, sf::Vector2f(1000.0f, 200.0f), sf::Vector2f(500.0f,
+		500.0f)));
 
 	float deltaTime = 0.0f;
 	sf::Clock clock;
@@ -27,6 +38,8 @@ int main()
 	while (window.isOpen())
 	{
 		deltaTime = clock.restart().asSeconds();
+		if (deltaTime > 1.0f / 20.0f)
+			deltaTime = 1.0f / 20.0f;
 
 		sf::Event eve;
 		while (window.pollEvent(eve))
@@ -43,11 +56,22 @@ int main()
 		}
 
 		player.Update(deltaTime);
+
+		sf::Vector2f direction;
+
+		for (Platform& platform : platforms)
+			if (platform.GetCollider().CheckCollision(player.GetCollider(), direction, 1.0f))
+				player.onCollision(direction);
+
 		view.setCenter(player.GetPosition());
 
-		window.clear(sf::Color::White);
+		window.clear(sf::Color(150, 150, 150));
 		window.setView(view);
 		player.Draw(window);
+	
+		for (Platform& platform : platforms)
+			platform.Draw(window);
+
 		window.display();
 	}
 }
